@@ -1,12 +1,10 @@
+# Starting with the Dockerfile written by Faizan Bashir
+# in this article: https://hackernoon.com/building-python-data-science-container-using-docker-c8e346295669
+# and updating to match my use cases
+
 FROM alpine:latest
 
-LABEL MAINTAINER="Faizan Bashir <faizan.ibn.bashir@gmail.com>"
-
-# Linking of locale.h as xlocale.h
-# This is done to ensure successfull install of python numpy package
-# see https://forum.alpinelinux.org/comment/690#comment-690 for more information.
-
-WORKDIR /var/www/
+LABEL MAINTAINER="Ryan Forsyth"
 
 # SOFTWARE PACKAGES
 #   * musl: standard C library
@@ -25,22 +23,28 @@ WORKDIR /var/www/
 #   * tk: GUI toolkit for the Tcl scripting language
 #   * libssl1.0: SSL shared libraries
 ENV PACKAGES="\
-    dumb-init \
-    musl \
-    libc6-compat \
-    linux-headers \
-    build-base \
     bash \
-    git \
+    build-base \
     ca-certificates \
+    coreutils \
+    curl \
+    dumb-init \
+    file \
+    font-adobe-100dpi \
     freetype \
-    libgfortran \
+    git \
+    libc6-compat \
     libgcc \
+    libgfortran \
+    libssl1.0 \
     libstdc++ \
+    linux-headers \
+    musl \
+    ncurses \
     openblas \
     tcl \
+    tree \
     tk \
-    libssl1.0 \
     "
 
 # PYTHON DATA SCIENCE PACKAGES
@@ -54,15 +58,17 @@ ENV PYTHON_PACKAGES="\
     numpy \
     matplotlib \
     scipy \
+    cython \
     scikit-learn \
     pandas \
     nltk \
     " 
 
+RUN apk update
+
 RUN apk add --no-cache --virtual build-dependencies python3 \
     && apk add --virtual build-runtime \
     build-base python3-dev openblas-dev freetype-dev pkgconfig gfortran \
-    && ln -s /usr/include/locale.h /usr/include/xlocale.h \
     && python3 -m ensurepip \
     && rm -r /usr/lib/python*/ensurepip \
     && pip3 install --upgrade pip setuptools \
@@ -74,4 +80,8 @@ RUN apk add --no-cache --virtual build-dependencies python3 \
     && apk add --no-cache --virtual build-dependencies $PACKAGES \
     && rm -rf /var/cache/apk/*
 
-CMD ["python3"]
+RUN echo 'export PS1="\[\033[38;5;6m\][\w]$\[$(tput sgr0)\] "' >>~/.bashrc
+
+WORKDIR /data
+
+CMD ["bash"]
